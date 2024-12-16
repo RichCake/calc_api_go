@@ -3,6 +3,7 @@ package application
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"os"
 
@@ -40,9 +41,17 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	request := new(Request)
 	defer r.Body.Close()
 	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil {
+	if err == io.EOF {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "missing request body"})
+		return
+	} else if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	} else if request.Expression == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "'expression' field is required"})
 		return
 	}
 
