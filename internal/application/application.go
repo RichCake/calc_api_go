@@ -39,9 +39,6 @@ type Request struct {
 func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	request := new(Request)
 	defer r.Body.Close()
-	if r.Method != http.MethodPost {
-		return
-	}
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
