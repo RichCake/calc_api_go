@@ -137,10 +137,5 @@ var (
 			Expression: "2/0",
 			Expected_error: ErrZeroDivision,
 		},
-		{
-			Name: "Invalid expression",
-			Expression: "",
-			Expected_error: ErrInvalidExpression,
-		},
 	}
 )

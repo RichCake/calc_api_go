@@ -57,7 +57,6 @@ curl --location 'localhost:8080/api/v1/calculate' \
 calc_api_go
 ├── cmd
 │   └── main.go
-├── go.mod
 ├── internal
 │   └── application
 │       ├── application.go
@@ -82,4 +81,13 @@ calc_api_go
 Чтобы запустить тесты перейдите в корневую директорию проекта и выполните команду
 ```bash
 go test -v ./...
+```
+
+## Логи
+Логи будут хранится в файле `logs.txt`. В логах содержится информация о работе сервера, ошибках и сбоев. Пример:
+```
+time=2024-12-21T14:34:15.177+03:00 level=INFO msg="Starting server" port=8080
+time=2024-12-21T14:34:21.401+03:00 level=INFO msg="Received request" method=POST path=/api/v1/calculate
+time=2024-12-21T14:34:21.402+03:00 level=INFO msg="Get expression" expression=20*(2+7)
+time=2024-12-21T14:34:21.402+03:00 level=INFO msg="Calculation result" result=180
 ```
