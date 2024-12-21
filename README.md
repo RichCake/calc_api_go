@@ -46,9 +46,11 @@ curl --location 'localhost:8080/api/v1/calculate' \
 4. `{"error": "division by zero"}` возвращается при делении на ноль.
 5. `{"error": "invalid expression"}` возвращается в иных случаях.
 
-Ошибки входных данных (Код статуса 400 Bad Request):
-1. `{"error":"missing request body"}` указывает на пустое тело запроса.
-2. `{"error":"'expression' field is required"}` указывает что в теле запроса нет ключа expression или он пустой.
+Другие ошибки:
+1. `{"error":"missing request body"}` указывает на пустое тело запроса. Код статуса 400 Bad Request.
+2. `{"error":"'expression' field is required"}` указывает что в теле запроса нет ключа expression или он пустой. Код статуса 400 Bad Request.
+3. `{"error":"method not allowed"}` вызывается если запрос произведен не с методом POST. Код статуса 405 Method Not Allowed.
+
 
 ## Структура проекта
 ```
@@ -69,7 +71,9 @@ calc_api_go
 Описание директорий:
 
 `pkg` — пакеты, функционал которых можно будет использовать как внутри этого модуля, так и сторонними модулями
+
 `internal` — пакеты, которые не могут быть использованы другими модулями
+
 `cmd` — пакет main для запуска программы
 
 ## Тесты

@@ -1,8 +1,14 @@
 package main
 
-import "github.com/RichCake/calc_api_go/internal/application"
+import (
+	"log/slog"
+	"github.com/RichCake/calc_api_go/internal/application"
+)
 
 func main() {
+	slog.Info("Starting application")
 	app := application.New()
-	app.RunServer()
+	if err := app.RunServer(); err != nil {
+		slog.Error("Server failed to start", "error", err)
+	}
 }

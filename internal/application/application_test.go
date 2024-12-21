@@ -74,7 +74,7 @@ func TestCalcHandlerUnprocessableEntity(t *testing.T) {
 			defer res.Body.Close()
 
 			if res.StatusCode != http.StatusUnprocessableEntity {
-				t.Errorf("Wrong status code: expected %v got %v", http.StatusOK, res.StatusCode)
+				t.Errorf("Wrong status code: expected %v got %v", http.StatusUnprocessableEntity, res.StatusCode)
 			}
 
 			var response map[string]string
@@ -88,5 +88,83 @@ func TestCalcHandlerUnprocessableEntity(t *testing.T) {
 				t.Fatalf("Key 'result' was not found in '%v'", response)
 			}
 		})
+	}
+}
+
+func TestCalcHandlerBadRequest(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       string
+		statusCode int
+		errorMsg   string
+	}{
+		{"Empty body", "", http.StatusBadRequest, "missing request body"},
+		{"Empty Expression", `{"expression":""}`, http.StatusBadRequest, "'expression' field is required"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/calculate", bytes.NewReader([]byte(tt.body)))
+			w := httptest.NewRecorder()
+			handler := http.HandlerFunc(application.CalcHandler)
+			handler.ServeHTTP(w, req)
+
+			res := w.Result()
+			data, err := io.ReadAll(res.Body)
+			if err != nil {
+				t.Fatalf("Error while reading body: %v", err.Error())
+			}
+			defer res.Body.Close()
+
+			if res.StatusCode != tt.statusCode {
+				t.Errorf("Wrong status code: expected %v got %v", tt.statusCode, res.StatusCode)
+			}
+
+			var response map[string]string
+			err = json.Unmarshal(data, &response)
+			if err != nil {
+				t.Fatalf("Failed to parse response: %v", err)
+			}
+
+			errorMsg, ok := response["error"]
+			if !ok {
+				t.Fatalf("Key 'error' was not found in '%v'", response)
+			}
+			if errorMsg != tt.errorMsg {
+				t.Errorf("Wrong error message: expected '%v' got '%v'", tt.errorMsg, errorMsg)
+			}
+		})
+	}
+}
+
+func TestCalcHandlerMethodNotAllowed(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/calculate", nil)
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(application.CalcHandler)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		t.Fatalf("Error while reading body: %v", err.Error())
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("Wrong status code: expected %v got %v", http.StatusMethodNotAllowed, res.StatusCode)
+	}
+
+	var response map[string]string
+	err = json.Unmarshal(data, &response)
+	if err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	errorMsg, ok := response["error"]
+	if !ok {
+		t.Fatalf("Key 'error' was not found in '%v'", response)
+	}
+	if errorMsg != "method not allowed" {
+		t.Errorf("Wrong error message: expected 'method not allowed' got '%v'", errorMsg)
 	}
 }
