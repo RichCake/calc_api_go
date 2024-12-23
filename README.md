@@ -41,21 +41,21 @@ curl --location 'localhost:8080/api/v1/calculate' \
 
 Ошибки, связанные с арифметическим выражением:
 
-| N  | Ошибка                              | Описание                                                                 |
-|----|-------------------------------------|--------------------------------------------------------------------------|
-| 1  | `{"error": "mismatched bracket"}`   | Указывает на неправильную скобочную последовательность.                  |
-| 2  | `{"error": "invalid symbols"}`      | Указывает на некорректные символы в выражении. Корректные символы: цифры (рациональные), операции +, -, *, /, операции приоритезации ( и ). |
-| 3  | `{"error": "invalid operations placement"}` | Указывает на некорректную расстановку арифметических операций. Например, 2++2 или 2*(+2+2). |
-| 4  | `{"error": "division by zero"}`     | Возвращается при делении на ноль.                                        |
-| 5  | `{"error": "invalid expression"}`   | Возвращается в иных случаях.                                             |
+| N  | Ошибка                              | Описание                                                                 | Пример curl запроса |
+|----|-------------------------------------|--------------------------------------------------------------------------|---------------------|
+| 1  | `{"error": "mismatched bracket"}`   | Указывает на неправильную скобочную последовательность.                  | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*2)"}'` |
+| 2  | `{"error": "invalid symbols"}`      | Указывает на некорректные символы в выражении. Корректные символы: цифры (рациональные), операции +, -, *, /, операции приоритезации ( и ). | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*a"}'` |
+| 3  | `{"error": "invalid operations placement"}` | Указывает на некорректную расстановку арифметических операций. Например, 2++2 или 2*(+2+2). | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2++2"}'` |
+| 4  | `{"error": "division by zero"}`     | Возвращается при делении на ноль.                                        | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2/0"}'` |
+| 5  | `{"error": "invalid expression"}`   | Возвращается в иных случаях.                                             | Примера не будет, так как большинство ситуаций обработаны в других ошибках |
 
 Другие ошибки:
 
-| N  | Ошибка                              | Описание                                                                 |
-|----|-------------------------------------|--------------------------------------------------------------------------|
-| 1  | `{"error":"missing request body"}`  | Указывает на пустое тело запроса. Код статуса 400 Bad Request.           |
-| 2  | `{"error":"'expression' field is required"}` | Указывает что в теле запроса нет ключа expression или он пустой. Код статуса 400 Bad Request. |
-| 3  | `{"error":"method not allowed"}`    | Вызывается если запрос произведен не с методом POST. Код статуса 405 Method Not Allowed. |
+| N  | Ошибка                              | Описание                                                                 | Пример curl запроса |
+|----|-------------------------------------|--------------------------------------------------------------------------|---------------------|
+| 1  | `{"error":"missing request body"}`  | Указывает на пустое тело запроса. Код статуса 400 Bad Request.           | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data ''` |
+| 2  | `{"error":"'expression' field is required"}` | Указывает что в теле запроса нет ключа expression или он пустой. Код статуса 400 Bad Request. | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": ""}'` |
+| 3  | `{"error":"method not allowed"}`    | Вызывается если запрос произведен не с методом POST. Код статуса 405 Method Not Allowed. | `curl --location --request GET 'localhost:8080/api/v1/calculate'` |
 
 ## Структура проекта
 ```
