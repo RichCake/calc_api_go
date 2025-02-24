@@ -33,13 +33,7 @@ func (h *TaskHandler) giveTask(w http.ResponseWriter) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "no tasks available"})
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":            task.ID,
-		"arg1":          task.Arg1,
-		"arg2":          task.Arg2,
-		"operation":     task.Operation,
-		"operation_time": task.OperationTime.Milliseconds(),
-	})
+	json.NewEncoder(w).Encode(task)
 }
 
 func (h *TaskHandler) receiveTask(w http.ResponseWriter, r *http.Request) {

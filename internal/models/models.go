@@ -10,15 +10,15 @@ type Expression struct {
 	ID int `json:"id"`
 	Status string `json:"status"`
 	Result float64 `json:"result"`
-	BinaryTree *calculation.Tree
+	BinaryTree *calculation.Tree `json:"-"`
 }
 
 type Task struct {
-	ID int
-	ExpressionID int
-	Status string
-	Arg1 float64
-	Arg2 float64
-	Operation string
-	OperationTime time.Duration
+	ID int `json:"id"`
+	ExpressionID int `json:"-"`
+	Status string `json:"-"`
+	Arg1 float64 `json:"arg1"`
+	Arg2 float64 `json:"arg2"`
+	Operation string `json:"operation"`
+	OperationTime time.Duration `json:"operation_time"`
 }

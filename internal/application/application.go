@@ -41,7 +41,7 @@ func (a *Application) RunServer() error {
 
 	storage := storage.NewStorage()
 
-	expressionService := expression.NewExpressionService(storage)
+	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)
 
 	slog.Info("Starting server", "port", a.config.Addr)
 	http.Handle("/api/v1/calculate", middlewares.LoggingMiddleware(handlers.NewCalcHandler(expressionService)))

@@ -8,16 +8,18 @@ import (
 	"github.com/RichCake/calc_api_go/internal/models"
 	"github.com/RichCake/calc_api_go/internal/services/calculation"
 	"github.com/RichCake/calc_api_go/internal/storage"
+	"github.com/RichCake/calc_api_go/internal/config"
 )
 
 // ExpressionService содержит логику обработки выражений
 type ExpressionService struct {
 	storage *storage.Storage
+	timeConfig config.TimeConfig
 }
 
 // Конструктор сервиса выражений
-func NewExpressionService(s *storage.Storage) *ExpressionService {
-	return &ExpressionService{storage: s}
+func NewExpressionService(s *storage.Storage, tc config.TimeConfig) *ExpressionService {
+	return &ExpressionService{storage: s, timeConfig: tc}
 }
 
 // Обработка нового выражения
@@ -63,7 +65,7 @@ func (s *ExpressionService) createTaskForSpareNode(node *calculation.TreeNode, e
 		Arg1:          arg1,
 		Arg2:          arg2,
 		Operation:     node.Val,
-		OperationTime: getOperationTime(node.Val),
+		OperationTime: s.getOperationTime(node.Val),
 	}
 	slog.Info("ExpressionService.createTaskForSpareNode: Сформирована задача", "task", task)
 
@@ -73,16 +75,16 @@ func (s *ExpressionService) createTaskForSpareNode(node *calculation.TreeNode, e
 	slog.Info("ExpressionService.createTaskForSpareNode: Вершине присвоена ID задачи", "node", node, "taskID", taskID)
 }
 
-func getOperationTime(operation string) time.Duration {
+func (s ExpressionService) getOperationTime(operation string) time.Duration {
 	switch operation {
 	case "+":
-		return time.Second
+		return s.timeConfig.TimeAdd
 	case "-":
-		return time.Second
+		return s.timeConfig.TimeSub
 	case "*":
-		return 2 * time.Second
+		return s.timeConfig.TimeMul
 	case "/":
-		return 2 * time.Second
+		return s.timeConfig.TimeDiv
 	default:
 		return 0
 	}

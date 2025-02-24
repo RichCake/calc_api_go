@@ -2,17 +2,29 @@ package config
 
 import (
 	"os"
-	"strconv"
 	"time"
 )
 
-type Config struct {
-	Addr string
+type TimeConfig struct {
 	TimeAdd time.Duration
 	TimeSub time.Duration
 	TimeMul time.Duration
 	TimeDiv time.Duration
-	Power int
+}
+
+type Config struct {
+	Addr string
+	TimeConf TimeConfig
+}
+
+func parseDurationFromEnv(strEnv string) time.Duration {
+	duration_string := os.Getenv(strEnv)
+	duration, err := time.ParseDuration(duration_string + "ms")
+	if duration_string == "" || err != nil {
+		return time.Second
+	} else {
+		return duration
+	}
 }
 
 func ConfigFromEnv() *Config {
@@ -23,45 +35,11 @@ func ConfigFromEnv() *Config {
 		config.Addr = "8080"
 	}
 
-	duration_string := os.Getenv("TIME_ADDITION_MS")
-	duration, err := time.ParseDuration(duration_string + "ms")
-	if duration_string == "" || err != nil {
-		config.TimeAdd = time.Second
-	} else {
-		config.TimeAdd = duration
-	}
-
-	duration_string = os.Getenv("TIME_SUBTRACTION_MS")
-	duration, err = time.ParseDuration(duration_string + "ms")
-	if duration_string == "" || err != nil {
-		config.TimeSub = time.Second
-	} else {
-		config.TimeSub = duration
-	}
-
-	duration_string = os.Getenv("TIME_MULTIPLICATIONS_MS")
-	duration, err = time.ParseDuration(duration_string + "ms")
-	if duration_string == "" || err != nil {
-		config.TimeMul = time.Second
-	} else {
-		config.TimeMul = duration
-	}
-
-	duration_string = os.Getenv("TIME_DIVISIONS_MS")
-	duration, err = time.ParseDuration(duration_string + "ms")
-	if duration_string == "" || err != nil {
-		config.TimeDiv = time.Second
-	} else {
-		config.TimeDiv = duration
-	}
-
-	power_str := os.Getenv("COMPUTING_POWER")
-	power_int, err := strconv.Atoi(power_str)
-	if power_str == "" || err != nil{
-		config.Power = 5
-	} else {
-		config.Power = power_int
-	}
+	
+	config.TimeConf.TimeAdd = parseDurationFromEnv("TIME_ADDITION_MS")
+	config.TimeConf.TimeSub = parseDurationFromEnv("TIME_SUBTRACTION_MS")
+	config.TimeConf.TimeMul = parseDurationFromEnv("TIME_MULTIPLICATIONS_MS")
+	config.TimeConf.TimeDiv = parseDurationFromEnv("TIME_DIVISIONS_MS")
 
 	return config
 }

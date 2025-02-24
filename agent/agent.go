@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -60,10 +61,26 @@ func worker(tasks <-chan task, results chan<- solvedTask, wg *sync.WaitGroup) {
 }
 
 func RunAgent() {
-	os.Setenv("TASK_URL", "http://localhost:8080/internal/task") // ПЕРЕДЕЛАТЬ
-	taskURL := os.Getenv("TASK_URL")
-	workerCount := 10 // ПЕРЕДЕЛАТЬ
-
+	taskPort, exists := os.LookupEnv("PORT")
+	if !exists {
+		taskPort = "8080"
+	}
+	taskURN, exists := os.LookupEnv("TASK_URN")
+	if !exists {
+		taskURN = "/internal/task"
+	}
+	taskURL := "http://localhost"
+	taskURI := taskURL+":"+taskPort+taskURN
+	workerCountStr, exists := os.LookupEnv("COMPUTING_POWER")
+	if !exists {
+		workerCountStr = "10"
+	}
+	var workerCount int
+	if num, err := strconv.Atoi(workerCountStr); err != nil {
+		workerCount = num
+	} else {
+		workerCount = 10
+	}
 	inputCh := make(chan task, workerCount)
 	outputCh := make(chan solvedTask, workerCount)
 	var wg sync.WaitGroup
@@ -72,7 +89,7 @@ func RunAgent() {
 	go func() {
 		defer close(inputCh)
 		for {
-			resp, err := http.Get(taskURL)
+			resp, err := http.Get(taskURI)
 			if resp == nil {
 				log.Print("Сервер не отвечает")
 				time.Sleep(time.Second)
@@ -115,7 +132,7 @@ func RunAgent() {
 				continue
 			}
 
-			resp, err := http.Post(taskURL, "application/json", bytes.NewReader(data))
+			resp, err := http.Post(taskURI, "application/json", bytes.NewReader(data))
 			if err != nil {
 				log.Printf("Ошибка при отправке результата: %v\n", err)
 				continue
