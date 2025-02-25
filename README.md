@@ -1,87 +1,124 @@
 # calc_api_go
-Сервис подсчёта арифметических выражений
+Сервис подсчёта арифметических выражений, а теперь еще и с параллельными вычислениями!
+
+tg: @RichCake
 
 ## Описание
-Сервис предоставляет функцию для вычисления арифметических выражений состоящих из односимвольных идентификаторов и знаков арифметических действий. Входящие данные - цифры(рациональные), операции +, -, *, /, операции приоритезации ( и ).
+Проект предоставляет два сервиса: оркестратор и агент. Они работают вместе и решают арифметические уравнения. Оркестратор парсит уравнения на независимые подзадачи, а агент вычисляет их параллельно.
 
 ## Инструкция по запуску
 1. Клонируйте репозиторий
 ```bash
 git clone https://github.com/RichCake/calc_api_go.git
+cd calc_api_go
 ```
-2. Перейдите в корневую директорию проекта
+2. По желанию сконфигурируйте проект. Создайте файл `.env` и скопируйте в него содержимое `.env.example`:
 ```bash
-cd путь/к/проекту
+cp .env.example .env
 ```
-3. Запустите файл cmd/main.go
+По умолчанию будут установлены значения:
+```
+PORT=8080
+TIME_ADDITION_MS=1000
+TIME_SUBTRACTION_MS=1000
+TIME_MULTIPLICATIONS_MS=1000
+TIME_DIVISIONS_MS=1000
+COMPUTING_POWER=10
+TASK_URN=/internal/task # не трогать
+```
+3. Запустите оркестратор
 ```bash
-go run cmd/main.go
+go run cmd/orchestrator/main.go
 ```
+4. Запустите агента
+```bash
+go run cmd/agent/main.go
+```
+## Инструкция по использованию
 
-## Формат запроса и ответа
-Чтобы получить результата вычисления выражения отправьте POST запрос на адрес /api/v1/calculate с выражением в ключе expression. Пример запроса:
+1. На `/api/v1/calculate` присылаете выражение:
 ```
 curl --location 'localhost:8080/api/v1/calculate' \
 --header 'Content-Type: application/json' \
 --data '{
-  "expression": "2+2*2"
+  "expression": "2+2"
 }'
 ```
-Ответ представляет из себя JSON с ключом result, если нет ошибки, в ином случае с ключом error. Подробнее про ошибки далее. 
-
-Пример ответа:
+В ответ получаете id:
+```
+{"id":1}
+```
+2. Затем посылаете запрос на `/api/v1/calculate/{id}'`
+```
+curl --location 'localhost:8080/api/v1/expressions/1'
+```
+И ждете пока сервер не решит невероятно трудозатратную задачу
 ```
 {
-    "result": 6
+    "id": 1,
+    "status": "solve",
+    "result": 4
 }
 ```
 
-## Ошибки возвращаемые сервером
-Если вы послали на сервер некорректное выражение, то он пришлет ответ в формате `{"error": "какая-то ошибка"}`. Если ошибка заключается в неправильном арифметическом выражении, то сервер вернет код статуса 422 Unprocessable Entity. 
+## Примеры запросов и ответов
+* ### /api/v1/calculate
+| Запрос | Код |Ответ | Описание |
+|-|-|-|-|
+| `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json --data '{"expression": "2+2"}'` | 200 | `{"id":1}` | Присылаете выражение и получаете id|
+|`curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*2)"}'`|422|`{"error":"mismatched bracket"}`|Указывает на неправильную скобочную последовательность|
+|`curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*a"}'`|422|`{"error":"invalid symbols"}`|Указывает на некорректные символы в выражении|
+|`curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2++2"}'`|422|`{"error":"invalid operations placement"}`|Указывает на некорректную расстановку арифметических операций|
+|`curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2/0"}'`|200|`{"id":1}`|На этапе отправки деление на ноль не проверяется, но в итоге появится ошибка в статусе выражения|
+|`curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2/0"}'`|422|`{"error":"invalid expression"}`|Пустое выражений|
+|`curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data ''`|400|`{"error":"invalid request"}`|Отсутствие тела запроса|
+|`curl --location 'localhost:8080/api/v1/calculate'`|405|-|Метод не разрешен|
 
-Ошибки, связанные с арифметическим выражением:
-
-| N  | Ошибка                              | Описание                                                                 | Пример curl запроса |
-|----|-------------------------------------|--------------------------------------------------------------------------|---------------------|
-| 1  | `{"error": "mismatched bracket"}`   | Указывает на неправильную скобочную последовательность.                  | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*2)"}'` |
-| 2  | `{"error": "invalid symbols"}`      | Указывает на некорректные символы в выражении. Корректные символы: цифры (рациональные), операции +, -, *, /, операции приоритезации ( и ). | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*a"}'` |
-| 3  | `{"error": "invalid operations placement"}` | Указывает на некорректную расстановку арифметических операций. Например, 2++2 или 2*(+2+2). | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2++2"}'` |
-| 4  | `{"error": "division by zero"}`     | Возвращается при делении на ноль.                                        | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2/0"}'` |
-| 5  | `{"error": "invalid expression"}`   | Возвращается в иных случаях.                                             | Примера не будет, так как большинство ситуаций обработаны в других ошибках |
-
-Другие ошибки:
-
-| N  | Ошибка                              | Описание                                                                 | Пример curl запроса |
-|----|-------------------------------------|--------------------------------------------------------------------------|---------------------|
-| 1  | `{"error":"missing request body"}`  | Указывает на пустое тело запроса. Код статуса 400 Bad Request.           | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data ''` |
-| 2  | `{"error":"'expression' field is required"}` | Указывает что в теле запроса нет ключа expression или он пустой. Код статуса 400 Bad Request. | `curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": ""}'` |
-| 3  | `{"error":"method not allowed"}`    | Вызывается если запрос произведен не с методом POST. Код статуса 405 Method Not Allowed. | `curl --location --request GET 'localhost:8080/api/v1/calculate'` |
+* ### /api/v1/expressions
+| Запрос | Код |Ответ | Описание |
+|-|-|-|-|
+|`curl --location 'localhost:8080/api/v1/expressions'`|200|`[{"id": 1,"status": "error division by zero","result": 0}]`|Список всех выражений|
+|`curl --location 'localhost:8080/api/v1/expressions'`|200|`[]`|Список оказался пуст|
+* ### /api/v1/expressions/:id
+| Запрос | Код |Ответ | Описание |
+|-|-|-|-|
+|`curl --location 'localhost:8080/api/v1/expressions/1`|200|`{"id": 1,"status": "solve","result": 4}`|Успешное завершение уравнения|
+|`curl --location 'localhost:8080/api/v1/expressions/2`|200|`{"id": 2,"status": "error division by zero","result": 0}`|Ошибка деления на ноль отлавливается здесь|
+|`curl --location 'localhost:8080/api/v1/expressions/876`|404|`{"error":"expression not found"}`|Несуществующее уравнение|
+|`curl --location 'localhost:8080/api/v1/expressions/abc`|404|`404 page not found`|Несуществующая страница|
+* ### /internal/task
+| Запрос | Код |Ответ | Описание |
+|-|-|-|-|
+|`curl --location 'localhost:8080/internal/task`|200|`{"id":2, "arg1":2, "arg2":0, "operation":"/", "operation_time":100}`|Выдана задача|
+|`curl --location 'localhost:8080/internal/task`|404|`{"error":"no tasks available"}`|Свободных задач нет|
+|`curl --location 'localhost:8080/internal/task --header 'Content-Type: application/json' --data '{"id": 2, "result": 0}'`|200|-|Задача принята|
+|`curl --location 'localhost:8080/internal/task --header 'Content-Type: application/json' --data ''`|422|`{"error":"invalid body"}`|Некорректное тело запроса|
 
 ## Структура проекта
+На диаграмме видно, что сервер состоит из 3 слоев, которые взаимодействуют только со своим соседом.
+![Структура приложения](diagram.png)
 ```
 calc_api_go
+├── agent
 ├── cmd
-│   └── main.go
-├── internal
-│   └── application
-│       ├── application.go
-│       └── ...
-└── pkg
-    └── calculation
-        ├── calculation.go
-        └── ...
+└── internal
+    ├── application
+    ├── config
+    ├── models
+    ├── services
+    ├── storage
+    └── transport
 ```
 
 Описание директорий:
+* `transport` — обработчики запросов
+* `services` - логика сервера
+* `storage` - взаимодействие с хранилищем
 
-`pkg` — пакеты, функционал которых можно будет использовать как внутри этого модуля, так и сторонними модулями
-
-`internal` — пакеты, которые не могут быть использованы другими модулями
-
-`cmd` — пакет main для запуска программы
+В коде вы найдете подробные комментарии
 
 ## Тесты
-В проекте предусмотренны тесты для функции вычисления арифметических выражений в файле `pkg/calculation/calculation_test.go` и тесты для сервера в файле `internal/application/application_test.go`.
+Каждый модуль в проекте покрыт тестами в большей или меньшей степени, но положительные тесты есть везде.
 
 Чтобы запустить тесты перейдите в корневую директорию проекта и выполните команду
 ```bash
@@ -89,10 +126,6 @@ go test -v ./...
 ```
 
 ## Логи
-Логи будут хранится в файле `logs.txt`. В логах содержится информация о работе сервера, ошибках и сбоев. Пример:
-```
-time=2024-12-21T14:34:15.177+03:00 level=INFO msg="Starting server" port=8080
-time=2024-12-21T14:34:21.401+03:00 level=INFO msg="Received request" method=POST path=/api/v1/calculate
-time=2024-12-21T14:34:21.402+03:00 level=INFO msg="Get expression" expression=20*(2+7)
-time=2024-12-21T14:34:21.402+03:00 level=INFO msg="Calculation result" result=180
-```
+Логи оркестратора будут хранится в файле `logs.txt`. В логах содержится информация о работе сервера, ошибках и сбоях. Сейчас каждый чих сервера логируется, это нужно для дебага.
+
+Логи агента выводятся в терминал.
