@@ -36,7 +36,9 @@ func (h *ExpressionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	// Логика спрятана сюда
 	expression := h.expressionService.GetExpressionByID(expression_id)
+
 	if expression == nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "expression not found"})

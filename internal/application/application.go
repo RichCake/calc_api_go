@@ -41,8 +41,11 @@ func (a *Application) RunServer() error {
 		slog.Error("Error while setting up logger", "error", err)
 	}
 
+	// Создаем хранилище, которое будет передаваться вглубь приложения по ссылке,
+	// то есть все сервисы будут работать с одним и тем же хранилищем
 	storage := storage.NewStorage()
 
+	// А вот и сервис по работе с выражениями. Он используется в хендлерах для обработки запросов 
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)
 
 	slog.Info("Starting server", "port", a.config.Addr)

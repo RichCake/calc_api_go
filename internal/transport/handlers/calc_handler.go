@@ -32,8 +32,9 @@ func (h *CalcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid request"})
 		return
 	}
-
+	// Логика спрятана сюда
 	id, err := h.expressionService.ProcessExpression(request.Expression)
+
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})

@@ -27,7 +27,6 @@ type solvedTask struct {
 func solveTask(t task) solvedTask {
 	solved := solvedTask{ID: t.ID}
 
-	// Имитация времени выполнения
 	time.Sleep(t.OperationTime)
 
 	switch t.Operation {
@@ -61,6 +60,7 @@ func worker(tasks <-chan task, results chan<- solvedTask, wg *sync.WaitGroup) {
 }
 
 func RunAgent() {
+	// ------------------- Берем из env разные переменные -------------------
 	taskPort, exists := os.LookupEnv("PORT")
 	if !exists {
 		taskPort = "8080"
@@ -81,11 +81,12 @@ func RunAgent() {
 	} else {
 		workerCount = 10
 	}
+	// ----------------------------------------------------------------------
 	inputCh := make(chan task, workerCount)
 	outputCh := make(chan solvedTask, workerCount)
 	var wg sync.WaitGroup
 
-	// Получение задач
+	// эта горутина постоянно просит задачи
 	go func() {
 		defer close(inputCh)
 		for {
@@ -116,13 +117,13 @@ func RunAgent() {
 		}
 	}()
 
-	// Запуск воркеров
+	// Запускаем воркеров
 	for i := 0; i < workerCount; i++ {
 		wg.Add(1)
 		go worker(inputCh, outputCh, &wg)
 	}
 
-	// Обработка результатов
+	// горутина, которая отправляет решения
 	go func() {
 		for res := range outputCh {
 			log.Printf("Отправляем решение %v", res)
@@ -141,7 +142,6 @@ func RunAgent() {
 		}
 	}()
 
-	// Ожидание завершения всех горутин
 	wg.Wait()
 	close(outputCh)
 }

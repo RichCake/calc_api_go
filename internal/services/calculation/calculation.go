@@ -1,7 +1,12 @@
 package calculation
 
+// 
+// 
+// В этом модуле расположена логика работы с БИНАРНЫМ ДЕРЕВОМ и ОБРАТНОЙ ПОЛЬСКОЙ НОТАЦИЕЙ
+// 
+// 
+
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -11,15 +16,6 @@ type Tree struct {
 	Root *TreeNode
 }
 
-func PrintTree(node *TreeNode, level int) {
-	if node == nil {
-		return
-	}
-	PrintTree(node.Right, level+1) // Сначала правый потомок
-	fmt.Printf("%s%s\n", strings.Repeat("  ", level), node.Val)
-	PrintTree(node.Left, level+1) // Потом левый потомок
-}
-
 type TreeNode struct {
 	Val    string
 	Left   *TreeNode
@@ -27,6 +23,8 @@ type TreeNode struct {
 	TaskID int
 }
 
+// Проверка на готовность функции родить задачу. 
+// Если у вершины оба потомка - числа, то вершина готова
 func (node *TreeNode) IsSpare() bool {
 	if node.Right != nil && node.Left != nil {
 		_, err1 := strconv.ParseFloat(node.Left.Val, 64)
@@ -38,6 +36,7 @@ func (node *TreeNode) IsSpare() bool {
 	return false
 }
 
+// Поиск всех вершин, готовых родить задачу
 func (t *Tree) FindSpareNodes() []*TreeNode {
 	spare_nodes := []*TreeNode{}
 	stack := []*TreeNode{t.Root}
@@ -58,6 +57,8 @@ func (t *Tree) FindSpareNodes() []*TreeNode {
 	return spare_nodes
 }
 
+// Когда задача решена, заменяем вершину на просто число,
+// чтобы ее родительская вершина была готова родить задачу
 func (t *Tree) ReplaceNodeWithValue(node *TreeNode, val float64) {
 	node.Left = nil
 	node.Right = nil
@@ -65,6 +66,8 @@ func (t *Tree) ReplaceNodeWithValue(node *TreeNode, val float64) {
 	node.Val = arg
 }
 
+// Поиск родительской вершины и вершины по ID задачи. 
+// Нужно для замены вершины на число после решения задачи
 func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 	if t.Root.TaskID == task_id {
 		return nil, t.Root
@@ -81,7 +84,6 @@ func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 			return node, node.Left
 		}
 
-		// Добавляем только непустые узлы
 		if node.Right != nil {
 			stack = append(stack, node.Right)
 		}
@@ -93,6 +95,8 @@ func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 	return nil, nil
 }
 
+// Переводит из инфиксной в постфиксную запись (знаю умные слова)
+// А еще по пути проверяет выражение на валидность
 func ToPostfix(expression string) ([]string, error) {
 	expression = strings.ReplaceAll(expression, " ", "")
 	var output []string
@@ -105,17 +109,15 @@ func ToPostfix(expression string) ([]string, error) {
 		"/": 2,
 	}
 
-	// Проверка на пустое выражение
 	if len(expression) == 0 {
 		return nil, ErrInvalidExpression
 	}
 
-	var prevToken string // Хранит предыдущий обработанный токен
+	var prevToken string
 
 	for i := 0; i < len(expression); i++ {
 		char := string(expression[i])
 
-		// Число (включая десятичные дроби)
 		if unicode.IsDigit(rune(expression[i])) || char == "." ||
 			(char == "-" && (i == 0 || prevToken == "(" || priority[prevToken] > 0)) {
 
@@ -132,7 +134,6 @@ func ToPostfix(expression string) ([]string, error) {
 			prevToken = char
 
 		} else if char == ")" {
-			// Перед `)` должно быть число или `)`
 			if prevToken == "" || priority[prevToken] > 0 || prevToken == "(" {
 				return nil, ErrMismatchedBracket
 			}
@@ -146,11 +147,10 @@ func ToPostfix(expression string) ([]string, error) {
 				return nil, ErrMismatchedBracket
 			}
 
-			stack = stack[:len(stack)-1] // Удаляем `(`
+			stack = stack[:len(stack)-1]
 			prevToken = ")"
 
 		} else if priority[char] > 0 {
-			// Запрещаем два оператора подряд
 			if prevToken == "" || priority[prevToken] > 0 || prevToken == "(" {
 				return nil, ErrInvalidOperationsPlacement
 			}
@@ -167,12 +167,10 @@ func ToPostfix(expression string) ([]string, error) {
 		}
 	}
 
-	// Проверка на завершение выражения
 	if prevToken == "" || priority[prevToken] > 0 {
 		return nil, ErrInvalidExpression
 	}
 
-	// Выгружаем оставшиеся операторы из стека
 	for len(stack) > 0 {
 		if stack[len(stack)-1] == "(" {
 			return nil, ErrMismatchedBracket
@@ -184,16 +182,15 @@ func ToPostfix(expression string) ([]string, error) {
 	return output, nil
 }
 
+// Строит бинарное дерево из постфиксной записи
 func BuildTree(postfix []string) *Tree {
-	stack := []*TreeNode{} // Используем указатели
+	stack := []*TreeNode{}
 
 	for _, token := range postfix {
 		_, err := strconv.ParseFloat(token, 64)
 		if err == nil {
-			// Если это число, создаем узел и кладем в стек
 			stack = append(stack, &TreeNode{Val: token})
 		} else {
-			// Если это оператор, забираем два верхних операнда из стека
 			if len(stack) < 2 {
 				panic("Invalid expression: not enough operands")
 			}
@@ -202,7 +199,6 @@ func BuildTree(postfix []string) *Tree {
 			left := stack[len(stack)-1]
 			stack = stack[:len(stack)-1]
 
-			// Создаем узел оператора с двумя потомками
 			node := &TreeNode{Val: token, Left: left, Right: right}
 			stack = append(stack, node)
 		}

@@ -1,5 +1,12 @@
 package storage
 
+// 
+// В этом модуле низкоуровневая логика взаимодействия 
+// со списком задач и выражений
+// 
+// Все методы понятны и без моих комментариев
+// 
+
 import (
 	"log/slog"
 	"sync"
@@ -8,7 +15,6 @@ import (
 	"github.com/RichCake/calc_api_go/internal/models"
 )
 
-// Хранилище данных
 type Storage struct {
 	mu             sync.Mutex
 	taskList       []models.Task
@@ -17,7 +23,6 @@ type Storage struct {
 	taskID 		   int64
 }
 
-// Создание нового хранилища
 func NewStorage() *Storage {
 	return &Storage{
 		taskList:       make([]models.Task, 0),
@@ -25,7 +30,6 @@ func NewStorage() *Storage {
 	}
 }
 
-// Добавление нового выражения
 func (s *Storage) AddExpression(expression models.Expression) int {
 	slog.Info("Storage.AddExpression: Получено выражение", "expression", expression)
 	s.mu.Lock()
@@ -38,7 +42,6 @@ func (s *Storage) AddExpression(expression models.Expression) int {
 	return expression.ID
 }
 
-// Получение списка выражений
 func (s *Storage) GetExpressions() []models.Expression {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -46,7 +49,6 @@ func (s *Storage) GetExpressions() []models.Expression {
 	return s.expressionList
 }
 
-// Добавление новой задачи
 func (s *Storage) AddTask(task models.Task) int {
 	slog.Info("Storage.AddTask: Получена задача", "task", task)
 	s.mu.Lock()
@@ -59,7 +61,6 @@ func (s *Storage) AddTask(task models.Task) int {
 	return task.ID
 }
 
-// Получение первой ожидающей задачи
 func (s *Storage) GetPendingTask() *models.Task {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -91,6 +92,7 @@ func (s *Storage) DeleteTask(task_id int) {
 	}
 }
 
+// Удаление всех задач, связанных с выражением
 func (s *Storage) DeleteTaskByExpressionID(expression_id int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

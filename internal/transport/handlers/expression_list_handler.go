@@ -7,19 +7,16 @@ import (
 	"github.com/RichCake/calc_api_go/internal/services/expression"
 )
 
-// ExpressionListHandler - обработчик для работы с выражениями
 type ExpressionListHandler struct {
 	expressionService *expression.ExpressionService
 }
 
-// Конструктор хендлера
 func NewExpressionListHandler(expressionService *expression.ExpressionService) *ExpressionListHandler {
 	return &ExpressionListHandler{
 		expressionService: expressionService,
 	}
 }
 
-// Метод для получения списка выражений
 func (h *ExpressionListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -27,10 +24,9 @@ func (h *ExpressionListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Получаем список выражений из сервиса
+	// Логика спрятана сюда
 	expressions := h.expressionService.GetExpressions()
 
-	// Возвращаем JSON-ответ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(expressions)
 }
