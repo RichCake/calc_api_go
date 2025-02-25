@@ -97,6 +97,7 @@ func ToPostfix(expression string) ([]string, error) {
 	expression = strings.ReplaceAll(expression, " ", "")
 	var output []string
 	var stack []string
+
 	priority := map[string]int{
 		"+": 1,
 		"-": 1,
@@ -104,38 +105,74 @@ func ToPostfix(expression string) ([]string, error) {
 		"/": 2,
 	}
 
+	// Проверка на пустое выражение
+	if len(expression) == 0 {
+		return nil, ErrInvalidExpression
+	}
+
+	var prevToken string // Хранит предыдущий обработанный токен
+
 	for i := 0; i < len(expression); i++ {
 		char := string(expression[i])
-		if ("0" <= char && char <= "9") || char == "." ||
-			(char == "-" && (i == 0 || string(expression[i-1]) == "(" || priority[string(expression[i-1])] > 0)) {
+
+		// Число (включая десятичные дроби)
+		if unicode.IsDigit(rune(expression[i])) || char == "." ||
+			(char == "-" && (i == 0 || prevToken == "(" || priority[prevToken] > 0)) {
+
 			number := char
 			for i+1 < len(expression) && (unicode.IsDigit(rune(expression[i+1])) || string(expression[i+1]) == ".") {
 				i++
 				number += string(expression[i])
 			}
 			output = append(output, number)
+			prevToken = number
+
 		} else if char == "(" {
 			stack = append(stack, char)
+			prevToken = char
+
 		} else if char == ")" {
+			// Перед `)` должно быть число или `)`
+			if prevToken == "" || priority[prevToken] > 0 || prevToken == "(" {
+				return nil, ErrMismatchedBracket
+			}
+
 			for len(stack) > 0 && stack[len(stack)-1] != "(" {
 				output = append(output, stack[len(stack)-1])
 				stack = stack[:len(stack)-1]
 			}
-			if len(stack) == 0 || stack[len(stack)-1] != "(" {
+
+			if len(stack) == 0 {
 				return nil, ErrMismatchedBracket
 			}
-			stack = stack[:len(stack)-1]
+
+			stack = stack[:len(stack)-1] // Удаляем `(`
+			prevToken = ")"
+
 		} else if priority[char] > 0 {
+			// Запрещаем два оператора подряд
+			if prevToken == "" || priority[prevToken] > 0 || prevToken == "(" {
+				return nil, ErrInvalidOperationsPlacement
+			}
+
 			for len(stack) > 0 && priority[stack[len(stack)-1]] >= priority[char] {
 				output = append(output, stack[len(stack)-1])
 				stack = stack[:len(stack)-1]
 			}
 			stack = append(stack, char)
+			prevToken = char
+
 		} else {
 			return nil, ErrInvalidSymbols
 		}
 	}
 
+	// Проверка на завершение выражения
+	if prevToken == "" || priority[prevToken] > 0 {
+		return nil, ErrInvalidExpression
+	}
+
+	// Выгружаем оставшиеся операторы из стека
 	for len(stack) > 0 {
 		if stack[len(stack)-1] == "(" {
 			return nil, ErrMismatchedBracket

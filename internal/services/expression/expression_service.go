@@ -54,10 +54,15 @@ func (s *ExpressionService) ProcessExpression(expressionStr string) (int, error)
 
 // Создание задачи для spare-узлов
 func (s *ExpressionService) createTaskForSpareNode(node *calculation.TreeNode, expressionID int) {
-	slog.Info("ExpressionService.createTaskForSpareNode: Начала создания задачи для узла", "node", node, "expressionID", expressionID)
+	slog.Info("ExpressionService.createTaskForSpareNode: Начало создания задачи для узла", "node", node, "expressionID", expressionID)
 	arg1, _ := strconv.ParseFloat(node.Left.Val, 64)
 	arg2, _ := strconv.ParseFloat(node.Right.Val, 64)
 	slog.Info("ExpressionService.createTaskForSpareNode: Извлечены аргументы для задачи", "arg1", arg1, "arg2", arg2)
+
+	if arg2 == 0 && node.Val == "/" {
+		slog.Info("ExpressionService.createTaskForSpareNode: Деление на 0, закрываем выражение", "node", node)
+		s.closeExpressionWithError(s.storage.FindExpressionByID(expressionID), "division by zero")
+	}
 
 	task := models.Task{
 		ExpressionID:  expressionID,
@@ -116,7 +121,7 @@ func (s *ExpressionService) ProcessIncomingTask(task_id int, result float64) {
 	slog.Info("ExpressionService.ProcessIncomingTask: Узел заменен на значение", "expression.BinaryTree", expression.BinaryTree)
 	if parent_task_node == nil {
 		slog.Info("ExpressionService.ProcessIncomingTask: У узла нет родителя, завершаем вычисление выражения")
-		s.SolveExpression(expression, result)
+		s.solveExpression(expression, result)
 		return
 	}
 	if parent_task_node.IsSpare() {
@@ -126,7 +131,14 @@ func (s *ExpressionService) ProcessIncomingTask(task_id int, result float64) {
 	slog.Info("ExpressionService.ProcessIncomingTask: Из родителя нельзя сделать задачу")
 }
 
-func (s *ExpressionService) SolveExpression(expression *models.Expression, result float64) {
+func (s *ExpressionService) closeExpressionWithError(expression *models.Expression, errorMsg string) {
+	expression.Status = "error " + errorMsg
+	expression.BinaryTree = nil
+	slog.Info("ExpressionService.CloseExpressionWithError: Закрытие выражения с ошибкой", "expression", expression, "error", errorMsg)
+	s.storage.DeleteTaskByExpressionID(expression.ID)
+} 
+
+func (s *ExpressionService) solveExpression(expression *models.Expression, result float64) {
 	expression.Result = result
 	expression.Status = "solve"
 	expression.BinaryTree = nil

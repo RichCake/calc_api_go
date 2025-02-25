@@ -91,6 +91,21 @@ func (s *Storage) DeleteTask(task_id int) {
 	}
 }
 
+func (s *Storage) DeleteTaskByExpressionID(expression_id int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i := range s.taskList {
+		if s.taskList[i].ExpressionID == expression_id {
+			slog.Info("Storage.DeleteTaskByExpressionID: Задача найдена", "s.taskList[i]", s.taskList[i])
+			s.taskList[i] = s.taskList[len(s.taskList)-1]
+			s.taskList = s.taskList[:len(s.taskList)-1]
+			slog.Info("Storage.DeleteTaskByExpressionID: Задача удалена", "s.taskList", s.taskList)
+			break
+		}
+	}
+}
+
 func (s *Storage) FindTaskByID(task_id int) *models.Task {
 	slog.Info("Storage.FindTaskByID: Получена задача", "task_id", task_id)
 	s.mu.Lock()
