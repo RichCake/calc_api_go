@@ -101,6 +101,10 @@ func (s *ExpressionService) GetExpressions() []models.Expression {
 	return s.storage.GetExpressions()
 }
 
+func (s *ExpressionService) GetExpressionByID(id int) *models.Expression {
+	return s.storage.FindExpressionByID(id)
+}
+
 func (s *ExpressionService) GetPendingTask() *models.Task {
 	return s.storage.GetPendingTask()
 }

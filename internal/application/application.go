@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gorilla/mux"
+
 	"github.com/RichCake/calc_api_go/internal/config"
-	"github.com/RichCake/calc_api_go/internal/storage"
 	"github.com/RichCake/calc_api_go/internal/services/expression"
+	"github.com/RichCake/calc_api_go/internal/storage"
 	"github.com/RichCake/calc_api_go/internal/transport/handlers"
 	"github.com/RichCake/calc_api_go/internal/transport/middlewares"
 )
@@ -44,8 +46,11 @@ func (a *Application) RunServer() error {
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)
 
 	slog.Info("Starting server", "port", a.config.Addr)
-	http.Handle("/api/v1/calculate", middlewares.LoggingMiddleware(handlers.NewCalcHandler(expressionService)))
-	http.Handle("/api/v1/expressions",middlewares.LoggingMiddleware(handlers.NewExpressionHandler(expressionService)))
-	http.Handle("/internal/task", middlewares.LoggingMiddleware(handlers.NewTaskHandler(expressionService)))
+	r := mux.NewRouter()
+	r.Handle("/api/v1/calculate", middlewares.LoggingMiddleware(handlers.NewCalcHandler(expressionService))).Methods(http.MethodPost)
+	r.Handle("/api/v1/expressions", middlewares.LoggingMiddleware(handlers.NewExpressionListHandler(expressionService))).Methods(http.MethodGet)
+	r.Handle("/api/v1/expressions/{id:[0-9]+}", middlewares.LoggingMiddleware(handlers.NewExpressionHandler(expressionService))).Methods(http.MethodGet)
+	r.Handle("/internal/task", middlewares.LoggingMiddleware(handlers.NewTaskHandler(expressionService)))
+	http.Handle("/", r)
 	return http.ListenAndServe(":"+a.config.Addr, nil)
 }

@@ -3,34 +3,45 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/RichCake/calc_api_go/internal/services/expression"
+	"github.com/gorilla/mux"
 )
 
-// ExpressionHandler - обработчик для работы с выражениями
 type ExpressionHandler struct {
 	expressionService *expression.ExpressionService
 }
 
-// Конструктор хендлера
 func NewExpressionHandler(expressionService *expression.ExpressionService) *ExpressionHandler {
 	return &ExpressionHandler{
 		expressionService: expressionService,
 	}
 }
 
-// Метод для получения списка выражений
 func (h *ExpressionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
+	vars := mux.Vars(r)
+	expression_id_str := vars["id"]
+
+	if expression_id_str == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "id is required"})
 		return
 	}
 
-	// Получаем список выражений из сервиса
-	expressions := h.expressionService.GetExpressions()
-
-	// Возвращаем JSON-ответ
+	expression_id, err := strconv.Atoi(expression_id_str)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a number"})
+		return
+	}
+	
+	expression := h.expressionService.GetExpressionByID(expression_id)
+	if expression == nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "expression not found"})
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(expressions)
+	json.NewEncoder(w).Encode(expression)
 }
