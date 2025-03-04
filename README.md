@@ -77,7 +77,7 @@ curl --location 'localhost:8080/api/v1/expressions/1'
 * ### /api/v1/expressions
 | Запрос | Код |Ответ | Описание |
 |-|-|-|-|
-|`curl --location 'localhost:8080/api/v1/expressions'`|200|`[{"id": 1,"status": "error division by zero","result": 0}]`|Список всех выражений|
+|`curl --location 'localhost:8080/api/v1/expressions'`|200|`[{"id": 1,"status": "error division by zero","result": 0}]`|Список всех выражений, но одно завершилось с ошибкой|
 |`curl --location 'localhost:8080/api/v1/expressions'`|200|`[]`|Список оказался пуст|
 * ### /api/v1/expressions/:id
 | Запрос | Код |Ответ | Описание |

@@ -53,7 +53,10 @@ func solveTask(t task) solvedTask {
 func worker(tasks <-chan task, results chan<- solvedTask, wg *sync.WaitGroup) {
 	defer wg.Done()
 
+
 	for t := range tasks {
+		timer := time.NewTimer(t.OperationTime)
+		<-timer.C
 		solved := solveTask(t)
 		results <- solved
 	}
