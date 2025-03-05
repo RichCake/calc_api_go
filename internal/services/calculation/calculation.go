@@ -1,10 +1,10 @@
 package calculation
 
-// 
-// 
+//
+//
 // В этом модуле расположена логика работы с БИНАРНЫМ ДЕРЕВОМ и ОБРАТНОЙ ПОЛЬСКОЙ НОТАЦИЕЙ
-// 
-// 
+//
+//
 
 import (
 	"strconv"
@@ -23,7 +23,7 @@ type TreeNode struct {
 	TaskID int
 }
 
-// Проверка на готовность функции родить задачу. 
+// Проверка на готовность функции родить задачу.
 // Если у вершины оба потомка - числа, то вершина готова
 func (node *TreeNode) IsSpare() bool {
 	if node.Right != nil && node.Left != nil {
@@ -66,7 +66,7 @@ func (t *Tree) ReplaceNodeWithValue(node *TreeNode, val float64) {
 	node.Val = arg
 }
 
-// Поиск родительской вершины и вершины по ID задачи. 
+// Поиск родительской вершины и вершины по ID задачи.
 // Нужно для замены вершины на число после решения задачи
 func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 	if t.Root.TaskID == task_id {

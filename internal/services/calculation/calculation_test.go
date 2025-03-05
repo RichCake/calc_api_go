@@ -2,6 +2,7 @@ package calculation
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +17,7 @@ func TestIsSpare(t *testing.T) {
 func TestFindSpareNodes(t *testing.T) {
 	tree := &Tree{
 		Root: &TreeNode{
-			Val: "+",
+			Val:   "+",
 			Left:  &TreeNode{Val: "3"},
 			Right: &TreeNode{Val: "4"},
 		},
@@ -38,8 +39,8 @@ func TestFindParentAndNodeByTaskID(t *testing.T) {
 	tree := &Tree{
 		Root: &TreeNode{
 			TaskID: 1,
-			Left:  &TreeNode{TaskID: 2},
-			Right: &TreeNode{TaskID: 3},
+			Left:   &TreeNode{TaskID: 2},
+			Right:  &TreeNode{TaskID: 3},
 		},
 	}
 

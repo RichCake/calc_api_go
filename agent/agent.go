@@ -68,10 +68,9 @@ func RunAgent() {
 	if !exists {
 		taskPort = "8080"
 	}
-	taskURN, exists := os.LookupEnv("TASK_URN")
-	if !exists {
-		taskURN = "/internal/task"
-	}
+	
+	taskURN := "/internal/task"
+	
 	taskURL := "http://localhost"
 	taskURI := taskURL+":"+taskPort+taskURN
 	workerCountStr, exists := os.LookupEnv("COMPUTING_POWER")

@@ -35,7 +35,7 @@ func (h *ExpressionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a number"})
 		return
 	}
-	
+
 	// Логика спрятана сюда
 	expression := h.expressionService.GetExpressionByID(expression_id)
 

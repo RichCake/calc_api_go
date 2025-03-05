@@ -39,7 +39,7 @@ func (h *TaskHandler) giveTask(w http.ResponseWriter) {
 
 func (h *TaskHandler) receiveTask(w http.ResponseWriter, r *http.Request) {
 	var agent_request struct {
-		TaskID int `json:"id"`
+		TaskID int     `json:"id"`
 		Result float64 `json:"result"`
 	}
 
@@ -48,7 +48,7 @@ func (h *TaskHandler) receiveTask(w http.ResponseWriter, r *http.Request) {
 		slog.Error("Agent sent an invalid body")
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid body"})
-    	return
+		return
 	}
 	// Логика спрятана сюда
 	h.expressionService.ProcessIncomingTask(agent_request.TaskID, agent_request.Result)

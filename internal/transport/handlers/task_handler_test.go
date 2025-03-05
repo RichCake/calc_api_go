@@ -34,7 +34,7 @@ func TestTaskHandler_ReceiveTask(t *testing.T) {
 	handler := NewTaskHandler(exprService)
 
 	task := map[string]interface{}{
-		"id": 1,
+		"id":     1,
 		"result": 4,
 	}
 	body, err := json.Marshal(task)

@@ -8,11 +8,11 @@ var (
 	ErrInvalidOperationsPlacement = errors.New("invalid operations placement")
 	ErrZeroDivision               = errors.New("division by zero")
 	ErrInvalidExpression          = errors.New("invalid expression")
-	ErrCalculation 				  = errors.Join(
-										ErrInvalidExpression,
-										ErrInvalidOperationsPlacement,
-										ErrInvalidSymbols,
-										ErrMismatchedBracket,
-										ErrZeroDivision,
-									)
+	ErrCalculation                = errors.Join(
+		ErrInvalidExpression,
+		ErrInvalidOperationsPlacement,
+		ErrInvalidSymbols,
+		ErrMismatchedBracket,
+		ErrZeroDivision,
+	)
 )
