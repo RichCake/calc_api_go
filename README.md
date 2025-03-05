@@ -4,7 +4,7 @@
 tg: @RichCake
 
 ## Описание
-Проект предоставляет два сервиса: оркестратор и агент. Они работают вместе и решают арифметические уравнения. Оркестратор парсит уравнения на независимые подзадачи, а агент вычисляет их параллельно.
+Проект предоставляет два сервиса: оркестратор и агент. Они работают вместе и решают арифметические уравнения. Оркестратор парсит уравнения на независимые подзадачи, а агент вычисляет их параллельно. Отмечу, если агент упадет, то решение задач не заморозится, а возобновится вместе с агентом.
 
 ## Инструкция по запуску
 1. Клонируйте репозиторий
@@ -62,6 +62,7 @@ curl --location 'localhost:8080/api/v1/expressions/1'
 ```
 
 ## Примеры запросов и ответов
+Здесь описаны все возможные запросы и ответы на них
 * ### /api/v1/calculate
 | Запрос | Код |Ответ | Описание |
 |-|-|-|-|
@@ -91,6 +92,7 @@ curl --location 'localhost:8080/api/v1/expressions/1'
 |-|-|-|-|
 |`curl --location 'localhost:8080/internal/task`|200|`{"id":2, "arg1":2, "arg2":0, "operation":"/", "operation_time":100}`|Выдана задача|
 |`curl --location 'localhost:8080/internal/task`|404|`{"error":"no tasks available"}`|Свободных задач нет|
+|`curl --location 'localhost:8080/internal/task`|200|`{"id":2, "arg1":2, "arg2":0, "operation":"/", "operation_time":100}`|Если не решать, то задача будет выдана снова|
 |`curl --location 'localhost:8080/internal/task --header 'Content-Type: application/json' --data '{"id": 2, "result": 0}'`|200|-|Задача принята|
 |`curl --location 'localhost:8080/internal/task --header 'Content-Type: application/json' --data ''`|422|`{"error":"invalid body"}`|Некорректное тело запроса|
 

@@ -5,7 +5,7 @@ package expression
 // Этот модуль содержит логику обработки выражений
 // ExpressionService взаимодействует со списком заданий
 // и выражений через хранилище Storage
-// 
+//
 //
 
 import (
@@ -106,19 +106,33 @@ func (s *ExpressionService) GetExpressionByID(id int) *models.Expression {
 	return s.storage.FindExpressionByID(id)
 }
 
-func setTimerToTask() {
-
+// Если задача не будет решена, то установит статус в ожидании
+func setTimerToTask(task *models.Task) {
+	timer := time.NewTimer(task.OperationTime + time.Second)
+	<-timer.C
+	if task.Status == "in progress" {
+		slog.Warn("Reset task because it was not solved")
+		task.Status = "pending"
+	}
 }
 
 // Этот метод раздает задачу, которая ждет отправки
 func (s *ExpressionService) GetPendingTask() *models.Task {
 	task := s.storage.GetPendingTask()
+	if task != nil {
+		go setTimerToTask(task)
+	}
 	return task
 }
 
 // Обработка входящей задачи. Или по другому: запускается когда агент отправляет результат задачи
 func (s *ExpressionService) ProcessIncomingTask(task_id int, result float64) {
 	task := s.storage.FindTaskByID(task_id)
+	// Если воркер долго решал задачу и она ушла новому, но старый все же отправил решение
+	if task.Status == "done" {
+		slog.Warn("ExpressionService.ProcessIncomingTask: receive task that already solved")
+		return
+	}
 	task.Status = "done"
 	expression := s.storage.FindExpressionByID(task.ExpressionID)
 	// Здесь самое интересное. Когда пришел результат задачи мы заменяем вершину задачи на результат...
