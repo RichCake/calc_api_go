@@ -22,6 +22,7 @@ func setUpLogger(logFile *os.File) error {
 
 type Application struct {
 	config *config.Config
+	service *expression.ExpressionService
 }
 
 func New() *Application {
@@ -47,6 +48,7 @@ func (a *Application) RunServer() error {
 
 	// А вот и сервис по работе с выражениями. Он используется в хендлерах для обработки запросов 
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)
+	a.service = expressionService
 
 	slog.Info("Starting server", "port", a.config.Addr)
 	r := mux.NewRouter()
@@ -56,4 +58,9 @@ func (a *Application) RunServer() error {
 	r.Handle("/internal/task", middlewares.LoggingMiddleware(handlers.NewTaskHandler(expressionService)))
 	http.Handle("/", r)
 	return http.ListenAndServe(":"+a.config.Addr, nil)
+}
+
+func (a *Application) Close() {
+	slog.Info("Application shutdown")
+	a.service.Close()
 }

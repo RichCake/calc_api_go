@@ -7,6 +7,9 @@ package calculation
 //
 
 import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -23,9 +26,56 @@ type TreeNode struct {
 	TaskID int
 }
 
+func SerializeTree(tree Tree) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(tree)
+	if err != nil {
+		return nil, nil
+	}
+	return buf.Bytes(), nil
+}
+
+func DeserializeTree(data []byte) (Tree, error) {
+	tree := Tree{}
+	if len(data) == 0 {
+		return tree, nil
+	}
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	err := dec.Decode(&tree)
+	if err != nil {
+		return tree, err
+	}
+	return tree, nil
+}
+ 
+// func (t *Tree) Serialize() []byte {
+// 	var buf bytes.Buffer
+// 	enc := gob.NewEncoder(&buf)
+// 	err := enc.Encode(t)
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	return buf.Bytes()
+// }
+
+// func (t *Tree) Deserialize(data []byte) error {
+// 	if len(data) == 0 {
+// 		return nil
+// 	}
+// 	buf := bytes.NewBuffer(data)
+// 	dec := gob.NewDecoder(buf)
+// 	err := dec.Decode(t)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
 // Проверка на готовность функции родить задачу.
 // Если у вершины оба потомка - числа, то вершина готова
-func (node *TreeNode) IsSpare() bool {
+func (node TreeNode) IsSpare() bool {
 	if node.Right != nil && node.Left != nil {
 		_, err1 := strconv.ParseFloat(node.Left.Val, 64)
 		_, err2 := strconv.ParseFloat(node.Right.Val, 64)
@@ -77,6 +127,7 @@ func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 	for len(stack) > 0 {
 		node := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
+		fmt.Println(node.Right, node.Left)
 		if node.Right != nil && node.Right.TaskID == task_id {
 			return node, node.Right
 		}
@@ -90,7 +141,6 @@ func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 		if node.Left != nil {
 			stack = append(stack, node.Left)
 		}
-
 	}
 	return nil, nil
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -28,10 +29,14 @@ func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *TaskHandler) giveTask(w http.ResponseWriter) {
 	// Логика спрятана сюда
-	task := h.expressionService.GetPendingTask()
-	if task == nil {
+	task, err := h.expressionService.GetPendingTask()
+	if errors.Is(err, expression.ErrPendingTaskNotFount) {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "no tasks available"})
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 	json.NewEncoder(w).Encode(task)

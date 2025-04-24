@@ -25,7 +25,12 @@ func (h *ExpressionListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	// Логика спрятана сюда
-	expressions := h.expressionService.GetExpressions()
+	expressions, err := h.expressionService.GetExpressions()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(expressions)

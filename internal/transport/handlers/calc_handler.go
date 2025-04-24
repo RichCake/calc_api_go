@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/RichCake/calc_api_go/internal/services/expression"
@@ -37,7 +38,11 @@ func (h *CalcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id, err := h.expressionService.ProcessExpression(request.Expression)
 
 	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
+		if errors.Is(err, expression.ErrStorage) || errors.Is(err, expression.ErrService) {
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+		}
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -37,13 +38,16 @@ func (h *ExpressionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Логика спрятана сюда
-	expression := h.expressionService.GetExpressionByID(expression_id)
-
-	if expression == nil {
+	e, err := h.expressionService.GetExpressionByID(expression_id)
+	if errors.Is(err, expression.ErrExpressionNotFound) {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "expression not found"})
 		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(expression)
+	json.NewEncoder(w).Encode(e)
 }
