@@ -9,7 +9,6 @@ package calculation
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -127,7 +126,6 @@ func (t *Tree) FindParentAndNodeByTaskID(task_id int) (*TreeNode, *TreeNode) {
 	for len(stack) > 0 {
 		node := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		fmt.Println(node.Right, node.Left)
 		if node.Right != nil && node.Right.TaskID == task_id {
 			return node, node.Right
 		}
