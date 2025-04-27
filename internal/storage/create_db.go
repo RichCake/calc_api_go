@@ -9,7 +9,8 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	const (
 		usersTable = `
 	CREATE TABLE IF NOT EXISTS users(
-		login TEXT PRIMARY KEY, 
+		user_id INTEGER PRIMARY KEY AUTOINCREMENT
+		login TEXT UNIQUE, 
 		password TEXT
 	);`
 

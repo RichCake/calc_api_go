@@ -22,3 +22,9 @@ type Task struct {
 	Operation     string        `json:"operation"`
 	OperationTime time.Duration `json:"operation_time"`
 }
+
+type User struct {
+	ID       int
+	Login    string
+	Password string
+}
