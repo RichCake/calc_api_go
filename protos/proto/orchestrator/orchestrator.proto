@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package orchestrator;
+
+option go_package = "github.com/RichCake/calc_api_go/proto";
+
+service Tasks {
+    rpc SendTask(SendTaskRequest) returns (SendTaskResponse);
+    rpc ReceiveTask(ReceiveTaskRequest) returns (ReceiveTaskResponse);
+}
+
+message SendTaskRequest {
+}
+
+message SendTaskResponse {
+    int64 id = 1;
+    double arg1 = 2;
+    double arg2 = 3;
+    string operation = 4;
+    int64 operation_time_ms = 5;
+}
+
+message ReceiveTaskRequest {
+    int64 id = 1;
+    double result = 2;
+}
+
+message ReceiveTaskResponse {
+}
+
