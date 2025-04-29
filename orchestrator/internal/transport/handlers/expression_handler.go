@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/RichCake/calc_api_go/orchestrator/internal/services/auth"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/services/expression"
 	"github.com/gorilla/mux"
 )
@@ -36,9 +37,10 @@ func (h *ExpressionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "id must be a number"})
 		return
 	}
-
+	
+	user_id := r.Context().Value(auth.ContextKeyUserID).(int)
 	// Логика спрятана сюда
-	e, err := h.expressionService.GetExpressionByID(expression_id)
+	e, err := h.expressionService.GetExpressionByID(expression_id, user_id)
 	if errors.Is(err, expression.ErrExpressionNotFound) {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{"error": "expression not found"})

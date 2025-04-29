@@ -11,7 +11,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/RichCake/calc_api_go/orchestrator/internal/models"
@@ -27,10 +26,10 @@ func (s *Storage) SaveExpression(expression *models.Expression) (int, error) {
 
 	if expression.ID == 0 {
 		q := `
-		INSERT INTO expressions (status, result, binary_tree_bytes)
-		VALUES ($1, $2, $3)
+		INSERT INTO expressions (status, result, binary_tree_bytes, user_id)
+		VALUES ($1, $2, $3, $4)
 		`
-		res, err := s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes)
+		res, err := s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.UserID)
 		if err != nil {
 			return 0, err
 		}
@@ -44,10 +43,10 @@ func (s *Storage) SaveExpression(expression *models.Expression) (int, error) {
 
 	q := `
 	UPDATE expressions
-	SET status = $1, result = $2, binary_tree_bytes = $3
+	SET status = $1, result = $2, binary_tree_bytes = $3, user_id = $5
 	WHERE expression_id = $4
 	`
-	_, err = s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.ID)
+	_, err = s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.ID, expression.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -87,11 +86,11 @@ func (s *Storage) SaveTask(task *models.Task) (int, error) {
 	return task.ID, nil
 }
 
-func (s *Storage) GetExpressions() ([]models.Expression, error) {
+func (s *Storage) GetExpressions(user_id int) ([]models.Expression, error) {
 	var expressions []models.Expression
-	var q = "SELECT expression_id, status, result FROM expressions"
+	var q = "SELECT expression_id, status, result FROM expressions WHERE user_id = $1"
 	ctx := context.TODO()
-	rows, err := s.db.QueryContext(ctx, q)
+	rows, err := s.db.QueryContext(ctx, q, user_id)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,6 @@ func (s *Storage) GetPendingTask() (models.Task, error) {
 	} else if err != nil {
 		return task, err
 	}
-	fmt.Println(task.Status)
 	return task, nil
 }
 
@@ -197,13 +195,13 @@ func (s *Storage) GetTask(task_id int) (models.Task, error) {
 func (s *Storage) GetExpression(expression_id int) (models.Expression, error) {
 	var expression models.Expression
 	var q = `
-	SELECT expression_id, status, result, binary_tree_bytes
+	SELECT expression_id, status, result, binary_tree_bytes, user_id
 	FROM expressions
 	WHERE expression_id = $1
 	`
 	ctx := context.TODO()
 	var treeBytes []byte
-	err := s.db.QueryRowContext(ctx, q, expression_id).Scan(&expression.ID, &expression.Status, &expression.Result, &treeBytes)
+	err := s.db.QueryRowContext(ctx, q, expression_id).Scan(&expression.ID, &expression.Status, &expression.Result, &treeBytes, &expression.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return expression, ErrItemNotFound
 	} else if err != nil {

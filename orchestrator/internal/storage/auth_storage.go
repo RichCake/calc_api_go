@@ -18,7 +18,7 @@ func (s *Storage) SaveUser(user *models.User) (int, error) {
 		INSERT INTO users (login, password)
 		VALUES ($1, $2)
 		`
-		res, err := s.db.ExecContext(ctx, q, user.Login, user.Password)
+		res, err := s.db.ExecContext(ctx, q, user.Login, user.PasswordHash)
 		if errors.Is(err, sqlite.ErrConstraintUnique) {
 			return 0, ErrUsernameTaken
 		} else if err != nil {
@@ -37,22 +37,22 @@ func (s *Storage) SaveUser(user *models.User) (int, error) {
 	SET login = $1, password = $2
 	WHERE user_id = $3
 	`
-	_, err := s.db.ExecContext(ctx, q, user.Login, user.Password, user.ID)
+	_, err := s.db.ExecContext(ctx, q, user.Login, user.PasswordHash, user.ID)
 	if err != nil {
 		return 0, err
 	}
 	return user.ID, nil
 }
 
-func (s *Storage) GetUser(user_id int) (models.User, error) {
+func (s *Storage) GetUser(login string) (models.User, error) {
 	var user models.User
 	var q = `
 	SELECT user_id, login, password 
 	FROM users
-	WHERE user_id = $1
+	WHERE login = $1
 	`
 	ctx := context.TODO()
-	err := s.db.QueryRowContext(ctx, q, user_id).Scan(&user.ID, &user.Login, &user.Password)
+	err := s.db.QueryRowContext(ctx, q, login).Scan(&user.ID, &user.Login, &user.PasswordHash)
 	if errors.Is(err, sql.ErrNoRows) {
 		return user, ErrItemNotFound
 	} else if err != nil {

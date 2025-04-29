@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/RichCake/calc_api_go/orchestrator/internal/services/auth"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/services/expression"
 )
 
@@ -24,8 +25,9 @@ func (h *ExpressionListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	user_id := r.Context().Value(auth.ContextKeyUserID).(int)
 	// Логика спрятана сюда
-	expressions, err := h.expressionService.GetExpressions()
+	expressions, err := h.expressionService.GetExpressions(user_id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})

@@ -18,10 +18,11 @@ type AuthConfig struct {
 }
 
 type Config struct {
-	Addr     string `env:"ORCHESTRATOR_PORT" env-default:"8080"`
-	GRPCPort string `env:"TASKS_PORT" env-default:"50051"`
-	TimeConf TimeConfig
-	AuthCon  AuthConfig
+	Addr      string `env:"ORCHESTRATOR_PORT" env-default:"8080"`
+	GRPCPort  string `env:"TASKS_PORT" env-default:"50051"`
+	SecretKey string `env:"SECRET_KEY"`
+	TimeConf  TimeConfig
+	AuthCon   AuthConfig
 }
 
 func ConfigFromEnv() (*Config, error) {

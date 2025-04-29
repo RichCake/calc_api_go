@@ -35,7 +35,7 @@ func (s *ExpressionService) Close() {
 
 // Обработчик входящего выражения.
 // Он запускается один раз для каждого выражения
-func (s *ExpressionService) ProcessExpression(expressionStr string) (int, error) {
+func (s *ExpressionService) ProcessExpression(expressionStr string, user_id int) (int, error) {
 	// Первым делом переводим в постфиксную запись
 	postfix, err := calculation.ToPostfix(expressionStr)
 	if err != nil {
@@ -47,6 +47,7 @@ func (s *ExpressionService) ProcessExpression(expressionStr string) (int, error)
 	newExpression := models.Expression{
 		Status:     "processing",
 		BinaryTree: calculation.BuildTree(postfix),
+		UserID: user_id,
 	}
 
 	// Добавляем выражение в хранилище
@@ -121,8 +122,8 @@ func (s ExpressionService) getOperationTime(operation string) time.Duration {
 }
 
 // Получение списка выражений из хранилища
-func (s *ExpressionService) GetExpressions() ([]models.Expression, error) {
-	expressions, err := s.storage.GetExpressions()
+func (s *ExpressionService) GetExpressions(user_id int) ([]models.Expression, error) {
+	expressions, err := s.storage.GetExpressions(user_id)
 	if err != nil {
 		slog.Error("ExpressionService.createTaskForSpareNode: error in storage", "error", err.Error())
 		return expressions, ErrStorage
@@ -131,9 +132,9 @@ func (s *ExpressionService) GetExpressions() ([]models.Expression, error) {
 }
 
 // Получение выражения по ID
-func (s *ExpressionService) GetExpressionByID(id int) (models.Expression, error) {
+func (s *ExpressionService) GetExpressionByID(id int, user_id int) (models.Expression, error) {
 	expression, err := s.storage.GetExpression(id)
-	if errors.Is(err, storage.ErrItemNotFound) {
+	if errors.Is(err, storage.ErrItemNotFound) || expression.UserID != user_id {
 		return expression, ErrExpressionNotFound
 	} else if err != nil {
 		return expression, err

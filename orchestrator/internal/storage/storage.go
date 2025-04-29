@@ -23,9 +23,9 @@ func createTables(ctx context.Context, db *sql.DB) error {
 		status TEXT,
 		result REAL,
 		binary_tree_bytes BLOB NOT NULL,
-		login TEXT,
+		user_id INTEGER,
 
-		FOREIGN KEY (login) REFERENCES users (login)
+		FOREIGN KEY (user_id) REFERENCES users (user_id)
 	);`
 		tasksTable = `
 	CREATE TABLE IF NOT EXISTS tasks(

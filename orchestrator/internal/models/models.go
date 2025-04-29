@@ -10,6 +10,7 @@ type Expression struct {
 	ID         int               `json:"id"`
 	Status     string            `json:"status"`
 	Result     float64           `json:"result"`
+	UserID     int               `json:"-"`
 	BinaryTree *calculation.Tree `json:"-"`
 }
 
@@ -24,7 +25,8 @@ type Task struct {
 }
 
 type User struct {
-	ID       int
-	Login    string
-	Password string
+	ID           int
+	Login        string
+	PasswordHash string
+	Password     string
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/RichCake/calc_api_go/orchestrator/internal/services/auth"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/services/expression"
 )
 
@@ -34,8 +35,9 @@ func (h *CalcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid request"})
 		return
 	}
+	user_id := r.Context().Value(auth.ContextKeyUserID).(int)
 	// Логика спрятана сюда
-	id, err := h.expressionService.ProcessExpression(request.Expression)
+	id, err := h.expressionService.ProcessExpression(request.Expression, user_id)
 
 	if err != nil {
 		if errors.Is(err, expression.ErrStorage) || errors.Is(err, expression.ErrService) {

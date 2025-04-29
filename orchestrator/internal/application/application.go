@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/RichCake/calc_api_go/orchestrator/internal/config"
+	"github.com/RichCake/calc_api_go/orchestrator/internal/services/auth"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/services/expression"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/storage"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/transport/handlers"
@@ -54,16 +55,22 @@ func (a *Application) RunServer() error {
 	// А вот и сервис по работе с выражениями. Он используется в хендлерах для обработки запросов
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)
 	a.service = expressionService
+	authService := auth.NewAuthService(storage, []byte(a.config.SecretKey))
 
 	slog.Info("Starting server", "port", a.config.Addr)
 	r := mux.NewRouter()
-	r.Handle("/api/v1/calculate", middlewares.LoggingMiddleware(handlers.NewCalcHandler(expressionService))).Methods(http.MethodPost)
-	r.Handle("/api/v1/expressions", middlewares.LoggingMiddleware(handlers.NewExpressionListHandler(expressionService))).Methods(http.MethodGet)
-	r.Handle("/api/v1/expressions/{id:[0-9]+}", middlewares.LoggingMiddleware(handlers.NewExpressionHandler(expressionService))).Methods(http.MethodGet)
-	r.Handle("/internal/task", middlewares.LoggingMiddleware(handlers.NewTaskHandler(expressionService)))
+	r.Use(middlewares.LoggingMiddleware)
 
-	r.Handle("/auth/login", handlers.NewLoginHandler(nil)).Methods(http.MethodPost)
-	r.Handle("/auth/register", handlers.NewRegisterHandler(nil)).Methods(http.MethodPost)
+	r.Handle("/auth/login", handlers.NewLoginHandler(authService)).Methods(http.MethodPost)
+	r.Handle("/auth/register", handlers.NewRegisterHandler(authService)).Methods(http.MethodPost)
+	r.Handle("/internal/task", handlers.NewTaskHandler(expressionService))
+
+	authRequired := r.NewRoute().Subrouter()
+	authRequired.Use(middlewares.NewAuthMiddleware([]byte(a.config.SecretKey)))
+
+	authRequired.Handle("/api/v1/calculate", handlers.NewCalcHandler(expressionService)).Methods(http.MethodPost)
+	authRequired.Handle("/api/v1/expressions", handlers.NewExpressionListHandler(expressionService)).Methods(http.MethodGet)
+	authRequired.Handle("/api/v1/expressions/{id:[0-9]+}", handlers.NewExpressionHandler(expressionService)).Methods(http.MethodGet)
 
 	http.Handle("/", r)
 	return http.ListenAndServe(":"+a.config.Addr, nil)
