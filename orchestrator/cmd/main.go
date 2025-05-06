@@ -16,7 +16,7 @@ func init() {
 	}
 	// Регистрируем структуры которые будем сериализовать для хранения в базе
 	gob.Register(calculation.Tree{})
-	gob.Register(calculation.TreeNode{})
+	gob.Register(&calculation.TreeNode{})
 }
 
 func main() {

@@ -1,22 +1,27 @@
 package agent
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"sync"
 	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+
+	pb "github.com/RichCake/calc_api_go/protos/gen/go/orchestrator"
 )
 
 type task struct {
-	ID             int           `json:"id"`
-	Arg1           float64       `json:"arg1"`
-	Arg2           float64       `json:"arg2"`
-	Operation      string        `json:"operation"`
-	OperationTime  time.Duration `json:"operation_time"`
+	ID            int           `json:"id"`
+	Arg1          float64       `json:"arg1"`
+	Arg2          float64       `json:"arg2"`
+	Operation     string        `json:"operation"`
+	OperationTime time.Duration `json:"operation_time"`
 }
 
 type solvedTask struct {
@@ -53,7 +58,6 @@ func solveTask(t task) solvedTask {
 func worker(tasks <-chan task, results chan<- solvedTask, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-
 	for t := range tasks {
 		timer := time.NewTimer(t.OperationTime)
 		<-timer.C
@@ -63,16 +67,13 @@ func worker(tasks <-chan task, results chan<- solvedTask, wg *sync.WaitGroup) {
 }
 
 func RunAgent() {
-	// ------------------- Берем из env разные переменные -------------------
-	taskPort, exists := os.LookupEnv("ORCHESTRATOR_PORT")
+	// Берем из env разные переменные
+	taskPort, exists := os.LookupEnv("TASKS_PORT")
 	if !exists {
-		taskPort = "8080"
+		taskPort = "50051"
 	}
-	
-	taskURN := "/internal/task"
-	
-	taskURL := "http://localhost"
-	taskURI := taskURL+":"+taskPort+taskURN
+
+	addr := "localhost" + ":" + taskPort
 	workerCountStr, exists := os.LookupEnv("AGENT_COMPUTING_POWER")
 	if !exists {
 		workerCountStr = "10"
@@ -83,7 +84,16 @@ func RunAgent() {
 	} else {
 		workerCount = 10
 	}
-	// ----------------------------------------------------------------------
+	// устанавливаем соединение с сервером
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	// создаем клиента
+	client := pb.NewTasksClient(conn)
+
 	inputCh := make(chan task, workerCount)
 	outputCh := make(chan solvedTask, workerCount)
 	var wg sync.WaitGroup
@@ -92,29 +102,38 @@ func RunAgent() {
 	go func() {
 		defer close(inputCh)
 		for {
-			resp, err := http.Get(taskURI)
-			if resp == nil {
-				log.Print("Сервер не отвечает")
-				time.Sleep(time.Second)
-				continue
-			}
-			if resp.StatusCode == http.StatusNotFound {
-				log.Print("Задач нет")
-				time.Sleep(time.Second)
-				continue
-			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			
+			resp, err := client.SendTask(ctx, &pb.SendTaskRequest{})
+			cancel()
 			if err != nil {
-				log.Printf("Ошибка при получении задачи: %v\n", err)
+				st, ok := status.FromError(err)
+				if ok {
+					switch st.Code() {
+					case codes.NotFound:
+						log.Print("Задач нет, ждем...")
+						time.Sleep(time.Second)
+					case codes.Unavailable:
+						log.Print("Сервер недоступен")
+						time.Sleep(time.Second)
+					default:
+						log.Printf("gRPC ошибка: %v (%s)", st.Message(), st.Code())
+						time.Sleep(time.Second)
+					}
+				} else {
+					log.Printf("Неизвестная ошибка: %v", err)
+				}
 				continue
 			}
-			log.Printf("Получен ответ %d от сервера", resp.StatusCode)
-			var t task
-			if err := json.NewDecoder(resp.Body).Decode(&t); err != nil {
-				log.Printf("Ошибка при декодировании JSON: %v\n", err)
-			}
-			log.Printf("Получена задача %v", t)
-			resp.Body.Close()
 
+			t := task{
+				ID:            int(resp.Id),
+				Arg1:          resp.Arg1,
+				Arg2:          resp.Arg2,
+				Operation:     resp.Operation,
+				OperationTime: time.Duration(resp.OperationTimeMs),
+			}
+			log.Printf("Получена задача: %+v", t)
 			inputCh <- t
 		}
 	}()
@@ -129,18 +148,14 @@ func RunAgent() {
 	go func() {
 		for res := range outputCh {
 			log.Printf("Отправляем решение %v", res)
-			data, err := json.Marshal(res)
-			if err != nil {
-				log.Printf("Ошибка при маршалинге JSON: %v\n", err)
-				continue
+			req := pb.ReceiveTaskRequest{
+				Id: int64(res.ID),
+				Result: res.Result,
 			}
 
-			resp, err := http.Post(taskURI, "application/json", bytes.NewReader(data))
-			if err != nil {
-				log.Printf("Ошибка при отправке результата: %v\n", err)
-				continue
-			}
-			resp.Body.Close()
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			client.ReceiveTask(ctx, &req)
+			cancel()
 		}
 	}()
 

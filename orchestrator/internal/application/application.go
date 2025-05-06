@@ -2,21 +2,21 @@ package application
 
 import (
 	"log/slog"
-	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
-
+	grpcserver "github.com/RichCake/calc_api_go/orchestrator/internal/application/grpc"
+	httpserver "github.com/RichCake/calc_api_go/orchestrator/internal/application/http"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/config"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/services/auth"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/services/expression"
 	"github.com/RichCake/calc_api_go/orchestrator/internal/storage"
-	"github.com/RichCake/calc_api_go/orchestrator/internal/transport/handlers"
-	"github.com/RichCake/calc_api_go/orchestrator/internal/transport/middlewares"
 )
 
 func setUpLogger(logFile *os.File) error {
-	var logger = slog.New(slog.NewTextHandler(logFile, nil))
+	opts := slog.HandlerOptions{
+		Level: slog.LevelDebug, // Устанавливаем уровень DEBUG
+	}
+	var logger = slog.New(slog.NewTextHandler(logFile, &opts))
 	slog.SetDefault(logger)
 	return nil
 }
@@ -57,23 +57,9 @@ func (a *Application) RunServer() error {
 	a.service = expressionService
 	authService := auth.NewAuthService(storage, []byte(a.config.SecretKey))
 
-	slog.Info("Starting server", "port", a.config.Addr)
-	r := mux.NewRouter()
-	r.Use(middlewares.LoggingMiddleware)
-
-	r.Handle("/auth/login", handlers.NewLoginHandler(authService)).Methods(http.MethodPost)
-	r.Handle("/auth/register", handlers.NewRegisterHandler(authService)).Methods(http.MethodPost)
-	r.Handle("/internal/task", handlers.NewTaskHandler(expressionService))
-
-	authRequired := r.NewRoute().Subrouter()
-	authRequired.Use(middlewares.NewAuthMiddleware([]byte(a.config.SecretKey)))
-
-	authRequired.Handle("/api/v1/calculate", handlers.NewCalcHandler(expressionService)).Methods(http.MethodPost)
-	authRequired.Handle("/api/v1/expressions", handlers.NewExpressionListHandler(expressionService)).Methods(http.MethodGet)
-	authRequired.Handle("/api/v1/expressions/{id:[0-9]+}", handlers.NewExpressionHandler(expressionService)).Methods(http.MethodGet)
-
-	http.Handle("/", r)
-	return http.ListenAndServe(":"+a.config.Addr, nil)
+	go httpserver.RunHTTPServer(authService, expressionService, *a.config)
+	grpcserver.RunGRPCServer(expressionService, *a.config)
+	return nil
 }
 
 func (a *Application) Close() {

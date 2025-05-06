@@ -7,70 +7,37 @@ package calculation
 //
 
 import (
-	"bytes"
-	"encoding/gob"
+	// "bytes"
+	// "encoding/gob"
+	"encoding/json"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
 type Tree struct {
-	Root *TreeNode
+	Root *TreeNode `json:"Root"`
 }
 
 type TreeNode struct {
-	Val    string
-	Left   *TreeNode
-	Right  *TreeNode
-	TaskID int
+	Val    string    `json:"Val"`
+	Left   *TreeNode `json:"Left"`
+	Right  *TreeNode `json:"Right"`
+	TaskID int       `json:"TaskID"`
 }
 
 func SerializeTree(tree Tree) ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	err := enc.Encode(tree)
-	if err != nil {
-		return nil, nil
-	}
-	return buf.Bytes(), nil
+	return json.Marshal(tree)
 }
 
 func DeserializeTree(data []byte) (Tree, error) {
-	tree := Tree{}
+	var tree Tree
 	if len(data) == 0 {
 		return tree, nil
 	}
-	buf := bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
-	err := dec.Decode(&tree)
-	if err != nil {
-		return tree, err
-	}
-	return tree, nil
+	err := json.Unmarshal(data, &tree)
+	return tree, err
 }
- 
-// func (t *Tree) Serialize() []byte {
-// 	var buf bytes.Buffer
-// 	enc := gob.NewEncoder(&buf)
-// 	err := enc.Encode(t)
-// 	if err != nil {
-// 		return nil
-// 	}
-// 	return buf.Bytes()
-// }
-
-// func (t *Tree) Deserialize(data []byte) error {
-// 	if len(data) == 0 {
-// 		return nil
-// 	}
-// 	buf := bytes.NewBuffer(data)
-// 	dec := gob.NewDecoder(buf)
-// 	err := dec.Decode(t)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 // Проверка на готовность функции родить задачу.
 // Если у вершины оба потомка - числа, то вершина готова

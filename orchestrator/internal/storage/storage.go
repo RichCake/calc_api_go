@@ -22,7 +22,7 @@ func createTables(ctx context.Context, db *sql.DB) error {
 		expression_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		status TEXT,
 		result REAL,
-		binary_tree_bytes BLOB NOT NULL,
+		binary_tree_bytes TEXT NOT NULL,
 		user_id INTEGER,
 
 		FOREIGN KEY (user_id) REFERENCES users (user_id)
