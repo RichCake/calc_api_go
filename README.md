@@ -1,6 +1,8 @@
 # calc_api_go
 Сервис для вычисления арифметических выражений с распределенной обработкой задач.
 
+<img src="https://github.com/user-attachments/assets/083db806-4917-44ec-981f-52d28e6f4a4a" width="500"/>
+
 tg: @RichCake
 
 ## Описание
@@ -214,6 +216,9 @@ calc_api_go
 ├── protos                  # .proto файлы для определения gRPC сервисов и сообщений
 └── logs.txt                # Файл логов Оркестратора
 ```
+
+![диаграмма CALC](https://github.com/user-attachments/assets/290c04df-e6f2-4efe-b71f-75766457d0b3)
+
 
 Основные компоненты Оркестратора:
 *   **HTTP слой (`orchestrator/internal/transport`):** Принимает запросы от пользователей, использует middleware для логирования и аутентификации, вызывает соответствующие сервисы.
