@@ -1,7 +1,7 @@
 # calc_api_go
 Сервис для вычисления арифметических выражений с распределенной обработкой задач.
 
-<img src="https://github.com/user-attachments/assets/083db806-4917-44ec-981f-52d28e6f4a4a" width="500"/>
+![Гофер](gopher.png)
 
 tg: @RichCake
 
