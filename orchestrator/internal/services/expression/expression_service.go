@@ -197,6 +197,12 @@ func (s *ExpressionService) ProcessIncomingTask(task_id int, result float64) err
 	}
 	// Здесь самое интересное. Когда пришел результат задачи, мы заменяем вершину задачи на результат...
 	parent_task_node, node := expression.BinaryTree.FindParentAndNodeByTaskID(task_id)
+	if node == nil {
+		// У меня тут фантомно спотыкается программа.
+		// Ошибка из-за кривого sqlite. Щас должно быть все ок (пожалуйста)
+		s.closeExpressionWithError(&expression, "task_id not found. critical error")
+		return ErrService
+	}
 	expression.BinaryTree.ReplaceNodeWithValue(node, result)
 	if parent_task_node == nil {
 		// ... если у вершины нет родителя, то это значит, что это корень дерева и выражение решено

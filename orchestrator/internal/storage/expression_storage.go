@@ -1,11 +1,6 @@
 package storage
 
-//
-// В этом модуле низкоуровневая логика взаимодействия
-// со списком задач и выражений
-//
-// Все методы понятны и без моих комментариев
-//
+// Уровень базы данных
 
 import (
 	"context"
@@ -32,10 +27,10 @@ func (s *Storage) SaveExpression(expression *models.Expression) (int, error) {
 
 	if expression.ID == 0 {
 		q := `
-		INSERT INTO expressions (status, result, binary_tree_bytes, user_id)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO expressions (status, result, binary_tree_bytes, user_id, created_at)
+		VALUES ($1, $2, $3, $4, $5)
 		`
-		res, err := s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.UserID)
+		res, err := s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.UserID, time.Now())
 		if err != nil {
 			return 0, err
 		}
@@ -49,10 +44,10 @@ func (s *Storage) SaveExpression(expression *models.Expression) (int, error) {
 
 	q := `
 	UPDATE expressions
-	SET status = $1, result = $2, binary_tree_bytes = $3, user_id = $5
-	WHERE expression_id = $4
+	SET status = $1, result = $2, binary_tree_bytes = $3, user_id = $4, updated_at = $5
+	WHERE expression_id = $6
 	`
-	_, err = s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.ID, expression.UserID)
+	_, err = s.db.ExecContext(ctx, q, expression.Status, expression.Result, treeBytes, expression.UserID, time.Now(), expression.ID)
 	if err != nil {
 		return 0, err
 	}

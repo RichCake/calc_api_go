@@ -37,7 +37,7 @@ func (s *serverAPI) SendTask(
 		Arg1: task.Arg1,
 		Arg2: task.Arg2,
 		Operation: task.Operation,
-		OperationTimeMs: task.OperationTime.Milliseconds(),
+		OperationTimeMs: task.OperationTime.Nanoseconds(),
 	}
 	return &response, nil
 }

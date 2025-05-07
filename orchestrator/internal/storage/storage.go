@@ -25,6 +25,8 @@ func createTables(ctx context.Context, db *sql.DB) error {
 		result REAL,
 		binary_tree_bytes TEXT NOT NULL,
 		user_id INTEGER,
+		created_at TIMESTAMP,
+		updated_at TIMESTAMP,
 
 		FOREIGN KEY (user_id) REFERENCES users (user_id)
 	);`
