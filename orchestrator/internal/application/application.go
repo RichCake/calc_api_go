@@ -13,9 +13,7 @@ import (
 )
 
 func setUpLogger(logFile *os.File) error {
-	opts := slog.HandlerOptions{
-		Level: slog.LevelDebug, // Устанавливаем уровень DEBUG
-	}
+	opts := slog.HandlerOptions{}
 	var logger = slog.New(slog.NewTextHandler(logFile, &opts))
 	slog.SetDefault(logger)
 	return nil
@@ -50,7 +48,7 @@ func (a *Application) RunServer() error {
 
 	// Создаем хранилище, которое будет передаваться вглубь приложения по ссылке,
 	// то есть все сервисы будут работать с одним и тем же хранилищем
-	storage := storage.NewStorage()
+	storage := storage.NewStorage(false)
 
 	// А вот и сервис по работе с выражениями. Он используется в хендлерах для обработки запросов
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)

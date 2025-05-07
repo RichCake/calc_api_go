@@ -7,7 +7,7 @@ import (
 
 	"github.com/RichCake/calc_api_go/orchestrator/internal/models"
 
-	sqlite "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 )
 
 func (s *Storage) SaveUser(user *models.User) (int, error) {
@@ -19,8 +19,11 @@ func (s *Storage) SaveUser(user *models.User) (int, error) {
 		VALUES ($1, $2)
 		`
 		res, err := s.db.ExecContext(ctx, q, user.Login, user.PasswordHash)
-		if errors.Is(err, sqlite.ErrConstraintUnique) {
-			return 0, ErrUsernameTaken
+		var sqliteErr sqlite3.Error
+		if errors.As(err, &sqliteErr) {
+			if errors.Is(sqliteErr.Code, sqlite3.ErrConstraint) {
+				return 0, ErrUsernameTaken
+			}
 		} else if err != nil {
 			return 0, err
 		}

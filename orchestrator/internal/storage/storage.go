@@ -60,10 +60,13 @@ type Storage struct {
 	db *sql.DB
 }
 
-func NewStorage() *Storage {
+func NewStorage(for_tests bool) *Storage {
 	ctx := context.TODO()
 
 	dbPath := filepath.Join("orchestrator", "storage", "store.db")
+	if for_tests {
+		dbPath = ":memory:"
+	}
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		panic(err)

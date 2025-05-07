@@ -19,9 +19,15 @@ import (
 
 func (s *Storage) SaveExpression(expression *models.Expression) (int, error) {
 	ctx := context.TODO()
-	treeBytes, err := calculation.SerializeTree(*expression.BinaryTree)
-	if err != nil {
-		return 0, err
+	var treeBytes []byte
+	var err error
+	if expression.BinaryTree != nil {
+		treeBytes, err = calculation.SerializeTree(*expression.BinaryTree)
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		treeBytes = make([]byte, 0)
 	}
 
 	if expression.ID == 0 {
@@ -152,19 +158,9 @@ func (s *Storage) GetPendingTask() (models.Task, error) {
 	return task, nil
 }
 
-func (s *Storage) DeleteTask(task_id int) error {
-	var q = "DELETE tasks WHERE task_id = $1"
-	ctx := context.TODO()
-	_, err := s.db.ExecContext(ctx, q, task_id)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Удаление всех задач, связанных с выражением
 func (s *Storage) DeleteTaskByExpressionID(expression_id int) error {
-	var q = "DELETE tasks WHERE expression_id = $1"
+	var q = "DELETE FROM tasks WHERE expression_id = $1"
 	ctx := context.TODO()
 	_, err := s.db.ExecContext(ctx, q, expression_id)
 	if err != nil {
@@ -182,7 +178,9 @@ func (s *Storage) GetTask(task_id int) (models.Task, error) {
 	`
 	ctx := context.TODO()
 	var nanoseconds int64
-	err := s.db.QueryRowContext(ctx, q, task_id).Scan(&task.ID, &task.Status, &task.Arg1, &task.Arg2, &task.Operation, &nanoseconds, &task.ExpressionID)
+	err := s.db.QueryRowContext(ctx, q, task_id).Scan(
+		&task.ID, &task.Status, &task.Arg1, &task.Arg2, &task.Operation, &nanoseconds, &task.ExpressionID,
+	)
 	task.OperationTime = time.Duration(nanoseconds)
 	if errors.Is(err, sql.ErrNoRows) {
 		return task, ErrItemNotFound

@@ -10,7 +10,6 @@ package expression
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -81,8 +80,6 @@ func (s *ExpressionService) ProcessExpression(expressionStr string, user_id int)
 		slog.Error("ExpressionService.ProcessExpression: error in storage", "error", err.Error())
 		return expressionID, ErrStorage
 	}
-	abcd, err := s.storage.GetExpression(newExpression.ID)
-	fmt.Println("Выражение: %+v Ошибка: %v", abcd, err)
 	return expressionID, nil
 }
 
