@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"os"
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -62,8 +63,13 @@ type Storage struct {
 
 func NewStorage(for_tests bool) *Storage {
 	ctx := context.TODO()
+	
+	dbDir := filepath.Join("orchestrator", "storage")
+	if _, err := os.Stat(dbDir); os.IsNotExist(err) {
+		os.Mkdir(dbDir, 0777)
+	}
+	dbPath := filepath.Join(dbDir, "store.db")
 
-	dbPath := filepath.Join("orchestrator", "storage", "store.db")
 	if for_tests {
 		dbPath = ":memory:"
 	}
