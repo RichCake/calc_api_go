@@ -1,14 +1,8 @@
 package calculation
 
-//
-//
 // В этом модуле расположена логика работы с БИНАРНЫМ ДЕРЕВОМ и ОБРАТНОЙ ПОЛЬСКОЙ НОТАЦИЕЙ
-//
-//
 
 import (
-	// "bytes"
-	// "encoding/gob"
 	"encoding/json"
 	"strconv"
 	"strings"

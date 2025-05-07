@@ -8,6 +8,7 @@ import (
 	"github.com/RichCake/calc_api_go/orchestrator/internal/application"
 )
 
+// Выполняется перед main
 func init() {
 	if err := godotenv.Load(); err != nil {
 		slog.Info("No .env file found")

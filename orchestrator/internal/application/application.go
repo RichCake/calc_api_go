@@ -13,6 +13,7 @@ import (
 )
 
 func setUpLogger(logFile *os.File) error {
+	// Инициализация логера в файл
 	opts := slog.HandlerOptions{}
 	var logger = slog.New(slog.NewTextHandler(logFile, &opts))
 	slog.SetDefault(logger)
@@ -21,7 +22,7 @@ func setUpLogger(logFile *os.File) error {
 
 type Application struct {
 	config  *config.Config
-	service *expression.ExpressionService
+	service *expression.ExpressionService // здесь только для graceful shutdown
 }
 
 func New() *Application {
@@ -53,8 +54,10 @@ func (a *Application) RunServer() error {
 	// А вот и сервис по работе с выражениями. Он используется в хендлерах для обработки запросов
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)
 	a.service = expressionService
+	// Сервис авторизации
 	authService := auth.NewAuthService(storage, []byte(a.config.SecretKey))
 
+	// Запуск HTTP и gRPC серверов в разных горутинах
 	go httpserver.RunHTTPServer(authService, expressionService, *a.config)
 	grpcserver.RunGRPCServer(expressionService, *a.config)
 	return nil
