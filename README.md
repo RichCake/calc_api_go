@@ -80,7 +80,7 @@
     В ответ вы получите JWT токен:
     ```json
     {
-      "token": "your_jwt_token_here"
+      "access_token": "your_jwt_token_here"
     }
     ```
     Сохраните этот токен. Он потребуется для доступа к защищенным эндпоинтам.
