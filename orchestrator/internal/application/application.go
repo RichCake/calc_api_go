@@ -21,18 +21,20 @@ func setUpLogger(logFile *os.File) error {
 }
 
 type Application struct {
-	config  *config.Config
-	service *expression.ExpressionService // здесь только для graceful shutdown
+	config   *config.Config
+	service  *expression.ExpressionService // здесь только для graceful shutdown
+	forTests bool
 }
 
-func New() *Application {
+func New(forTests bool) *Application {
 	config, err := config.ConfigFromEnv()
 	if err != nil {
 		panic(err)
 	}
 
 	return &Application{
-		config: config,
+		config:   config,
+		forTests: forTests,
 	}
 }
 
@@ -49,7 +51,7 @@ func (a *Application) RunServer() error {
 
 	// Создаем хранилище, которое будет передаваться вглубь приложения по ссылке,
 	// то есть все сервисы будут работать с одним и тем же хранилищем
-	storage := storage.NewStorage(false)
+	storage := storage.NewStorage(a.forTests)
 
 	// А вот и сервис по работе с выражениями. Он используется в хендлерах для обработки запросов
 	expressionService := expression.NewExpressionService(storage, a.config.TimeConf)

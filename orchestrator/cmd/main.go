@@ -17,7 +17,7 @@ func init() {
 
 func main() {
 	slog.Info("Starting application")
-	app := application.New()
+	app := application.New(false)
 	defer app.Close()
 	err := app.RunServer()
 	if err != nil {
